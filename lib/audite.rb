@@ -89,11 +89,11 @@ class Audite
   end
 
   def tell
-    @mp3.tell
+    @mp3 ? @mp3.tell : 0
   end
 
   def length
-    @mp3.length
+    @mp3 ? @mp3.length : 0
   end
 
   def read(samples)

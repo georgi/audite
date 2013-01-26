@@ -18,7 +18,7 @@ class Audite
     end
   end
 
-  attr_reader :events
+  attr_reader :events, :active
 
   def initialize
     @events = Events.new

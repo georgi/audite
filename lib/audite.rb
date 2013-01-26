@@ -36,6 +36,7 @@ class Audite
 
   def process(samples)
     if tell >= length
+      @thread.kill
       events.trigger(:complete)
       stop_stream
       (0..samples).map { 0 }

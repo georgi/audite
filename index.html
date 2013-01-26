@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <title>Audite by georgi</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Audite</h1>
+        <h2>Portable mp3 player for Ruby</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/georgi/audite/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/georgi/audite/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/georgi/audite" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>Audite - a portable mp3 player in Ruby</h1>
+
+<p>Audite is a portable ruby library for playing mp3 files built on
+libmp123 and portaudio.</p>
+
+<h2>Features</h2>
+
+<ul>
+<li>Nonblocking playback using native threads</li>
+<li>Realtime seeking</li>
+<li>Realtime events</li>
+<li>Progress information</li>
+<li>Simple level meter</li>
+</ul><h2>Player</h2>
+
+<p>Audite ships an example player, just try <code>audite test.mp3</code>.</p>
+
+<h2>Example</h2>
+
+<pre><code>require 'audite'
+
+player = Audite.new
+
+player.events.on(:complete) do
+  exit
+end
+
+player.events.on(:level) do |level|
+  puts level
+end
+
+player.events.on(:position_change) do |pos|
+  puts pos
+end
+
+player.load('test.mp3')
+player.start_stream
+player.forward(20) 
+
+</code></pre>
+
+<h2>OSX Install</h2>
+
+<pre><code>brew install portaudio
+brew install mpg123
+
+gem install audite
+</code></pre>
+      </section>
+    </div>
+
+    
+  </body>
+</html>

@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+$:.unshift "lib"
+
+require 'audite'
+require 'curses'
+
+player = Audite.new
+player.load(ARGV[0])
+player.start_stream
+
+player.events.on(:complete) do
+  exit
+end
+
+player.events.on(:level) do |level|
+  p = (level * Curses.cols).ceil
+  Curses.setpos(2, 0)
+  Curses.addstr(">" * p + " " * (Curses.cols - p))
+  Curses.refresh
+end
+
+player.events.on(:position_change) do |pos|
+  p = ((pos / player.length_in_seconds) * Curses.cols).ceil
+  Curses.setpos(0, 0)
+  Curses.addstr("playing #{ARGV[0]}    #{player.position.ceil} seconds of #{player.length_in_seconds.ceil} total")
+  Curses.setpos(1, 0)
+  Curses.addstr("#" * p + " " * (Curses.cols - p))
+  Curses.refresh
+end
+
+Curses.init_screen
+Curses.noecho
+Curses.stdscr.keypad(true)
+Curses.clear
+
+while c = Curses.getch
+  case c
+  when Curses::KEY_LEFT
+    player.rewind
+  when Curses::KEY_RIGHT
+    player.forward
+  when ' '
+    player.toggle
+  end
+end

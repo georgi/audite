@@ -41,11 +41,14 @@ libmp123 and portaudio.</p>
 <li>Realtime events</li>
 <li>Progress information</li>
 <li>Simple level meter</li>
-</ul><h2>Player</h2>
+</ul><h2>Usage</h2>
 
-<p>Audite ships an example player, just try <code>audite test.mp3</code>.</p>
+<p>Audite ships an example player:</p>
 
-<h2>Example</h2>
+<pre><code>audite test.mp3
+</code></pre>
+
+<h2>API Example</h2>
 
 <pre><code>require 'audite'
 
@@ -74,6 +77,12 @@ player.forward(20)
 <pre><code>brew install portaudio
 brew install mpg123
 
+gem install audite
+</code></pre>
+
+<h2>Debian / Ubuntu Install</h2>
+
+<pre><code>apt-get install portaudio19-dev libmpg123
 gem install audite
 </code></pre>
       </section>

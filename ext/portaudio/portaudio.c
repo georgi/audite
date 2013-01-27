@@ -53,7 +53,7 @@ static int paCallback(const void *inputBuffer,
 
 VALUE rb_portaudio_new(VALUE klass)
 {
-  PaStreamParameters inputParameters, outputParameters;
+  PaStreamParameters outputParameters;
   const PaDeviceInfo *deviceInfo;
   PaError err;
   int device, numDevices;
@@ -65,37 +65,30 @@ VALUE rb_portaudio_new(VALUE klass)
 
   portaudio->size = 4096 * 2;
   portaudio->buffer = (float *) malloc(sizeof(float) * portaudio->size);
-            
+
   numDevices = Pa_GetDeviceCount();
 
   if (numDevices < 0)
     rb_raise(rb_eStandardError, "no devices detected");
 
-  // device = Pa_GetDefaultOutputDevice();
-  device = 0;
+  device = Pa_GetDefaultOutputDevice();
   deviceInfo = Pa_GetDeviceInfo(device);
-
-  inputParameters.device = device;
-  inputParameters.channelCount = deviceInfo->maxInputChannels;
-  inputParameters.sampleFormat = paFloat32;
-  inputParameters.suggestedLatency = deviceInfo->defaultLowInputLatency;
-  inputParameters.hostApiSpecificStreamInfo = NULL;
 
   outputParameters.device = device;
   outputParameters.channelCount = deviceInfo->maxOutputChannels;
-  outputParameters.sampleFormat = paInt16;
+  outputParameters.sampleFormat = paFloat32;
   outputParameters.suggestedLatency = deviceInfo->defaultLowOutputLatency;
   outputParameters.hostApiSpecificStreamInfo = NULL;
 
   err = Pa_OpenStream(
       &portaudio->stream,
-      &inputParameters,
+      NULL,
       &outputParameters,
       44100,
       4096,
-      paNoFlag, 
+      paNoFlag,
       paCallback,
-      NULL); 
+      portaudio);
 
   if (err != paNoError) {
     rb_raise(rb_eStandardError, "%s", Pa_GetErrorText(err));

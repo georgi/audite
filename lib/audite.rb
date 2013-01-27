@@ -29,19 +29,18 @@ class Audite
   def start_thread
     Thread.start do
       loop do
-        @stream.write(process(4096))
+        @stream.write(process(4096 * 2))
       end
     end
   end
 
   def process(samples)
     if tell >= length
-      @thread.kill
-      events.trigger(:complete)
       stop_stream
+      events.trigger(:complete)
       (0..samples).map { 0 }
 
-    elsif slice = read(samples * 2)
+    elsif slice = read(samples)
       events.trigger(:level, level(slice))
       events.trigger(:position_change, position)
 
@@ -51,8 +50,8 @@ class Audite
     end
 
   rescue => e
-    puts e.message
-    puts e.backtrace
+    $stderr.puts e.message
+    $stderr.puts e.backtrace
   end
 
   def start_stream
@@ -78,6 +77,7 @@ class Audite
   end
 
   def load(file)
+    @file = file
     @mp3 = Mpg123.new(file)
   end
 
@@ -118,11 +118,13 @@ class Audite
   end
 
   def seek(seconds)
-    samples = seconds_to_samples(seconds)
+    if @mp3
+      samples = seconds_to_samples(seconds)
 
-    if (0..length).include?(samples)
-      @mp3.seek(samples)
-      events.trigger(:position_change, position)
+      if (0..length).include?(samples)
+        @mp3.seek(samples)
+        events.trigger(:position_change, position)
+      end
     end
   end
 
@@ -138,17 +140,11 @@ class Audite
     slice.inject(0) {|s, i| s + i.abs } / slice.size
   end
 
-  def rewind(seconds = 1)
-    if @mp3
-      start_stream
-      seek(position - seconds)
-    end
+  def rewind(seconds = 2)
+    seek(position - seconds)
   end
 
-  def forward(seconds = 1)
-    if @mp3
-      start_stream
-      seek(position + seconds)
-    end
+  def forward(seconds = 2)
+    seek(position + seconds)
   end
 end

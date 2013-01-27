@@ -46,8 +46,8 @@ static int paCallback(const void *inputBuffer,
     *out++ = portaudio->buffer[i];
   }
 
+  pthread_cond_broadcast(&portaudio->cond);
   pthread_mutex_unlock(&portaudio->mutex);
-  pthread_cond_signal(&portaudio->cond);
 
   return 0;
 }
@@ -115,6 +115,8 @@ VALUE rb_portaudio_start(VALUE self)
   Data_Get_Struct(self, Portaudio, portaudio);
   int err = Pa_StartStream(portaudio->stream);
 
+  pthread_cond_broadcast(&portaudio->cond);
+
   if (err != paNoError) {
     rb_raise(rb_eStandardError, "%s", Pa_GetErrorText(err));
   }
@@ -127,6 +129,8 @@ VALUE rb_portaudio_stop(VALUE self)
   Portaudio *portaudio;
   Data_Get_Struct(self, Portaudio, portaudio);
   int err = Pa_StopStream(portaudio->stream);
+
+  pthread_cond_broadcast(&portaudio->cond);
 
   if (err != paNoError) {
     rb_raise(rb_eStandardError, "%s", Pa_GetErrorText(err));

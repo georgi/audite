@@ -40,8 +40,7 @@ static int paCallback(void *inputBuffer,
                       void *outputBuffer,
                       unsigned long framesPerBuffer,
                       PaTimestamp outTime,
-                      void *userData );
-
+                      void *userData )
 #endif
 {
   Portaudio *portaudio = (Portaudio *) userData;
@@ -78,6 +77,9 @@ VALUE rb_portaudio_new(VALUE klass)
                              paFloat32,   /* 32 bit floating point output */
                              44100,       /* 44100 sample rate*/
                              4096,        /* frames per buffer */
+#ifndef HAVE_TYPE_PASTREAMCALLBACKTIMEINFO
+                             1,           /* number of buffer */
+#endif
                              paCallback,  /* this is your callback function */
                              (void*) portaudio);
 
@@ -112,7 +114,11 @@ VALUE rb_portaudio_write(VALUE self, VALUE buffer)
     portaudio->buffer[i] = NUM2DBL(rb_ary_entry(buffer, i));
   }
 
+#ifdef RUBY_UBF_IO
   rb_thread_blocking_region(portaudio_wait, portaudio, RUBY_UBF_IO, NULL);
+#else
+  portaudio_wait(portaudio);
+#endif
 
   return self;
 }

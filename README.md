@@ -12,11 +12,15 @@ libmp123 and portaudio.
 * Progress information
 * Simple level meter
 
-## Player
+## Usage
 
-Audite ships an example player, just try `audite test.mp3`.
+Audite ships an example player:
 
-## Example
+```
+audite test.mp3
+```
+
+## API Example
 
 ```
 require 'audite'
@@ -47,5 +51,12 @@ player.forward(20)
 brew install portaudio
 brew install mpg123
 
+gem install audite
+```
+
+
+## Debian / Ubuntu Install
+```
+apt-get install portaudio19-dev libmpg123
 gem install audite
 ```

@@ -1,15 +1,24 @@
 require 'mkmf'
 
 unless have_header('portaudio.h')
-  puts "please install portaudio headers"
+  puts "portaudio.h not found"
+  puts "please brew install portaudio"
+  puts "or apt-get install portaudio19-dev"
   exit
 end
 
 unless have_library('portaudio')
-  puts "please install portaudio lib"
+  puts "lib portaudio not found"
+  puts "brew install portaudio"
+  puts "or apt-get install portaudio19-dev"
   exit
 end
 
-have_type('PaStreamCallbackTimeInfo', 'portaudio.h')
+unless have_type('PaStreamCallbackTimeInfo', 'portaudio.h')
+  puts "portaudio19 not found"
+  puts "brew install portaudio"
+  puts "or apt-get install portaudio19-dev"
+  exit
+end
 
 create_makefile('portaudio')

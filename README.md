@@ -60,3 +60,9 @@ gem install audite
 apt-get install portaudio19-dev libmpg123
 gem install audite
 ```
+
+## Soundcloud2000
+
+Audite provides the audio engine for [Soundcloud2000][1]
+
+[1]: https://github.com/grobie/soundcloud2000

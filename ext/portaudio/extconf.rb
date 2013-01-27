@@ -10,4 +10,6 @@ unless have_library('portaudio')
   exit
 end
 
+have_type('PaStreamCallbackTimeInfo', 'portaudio.h')
+
 create_makefile('portaudio')

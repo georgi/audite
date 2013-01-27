@@ -28,13 +28,21 @@ void free_portaudio(void *ptr)
   }
 }
 
-
+#ifdef HAVE_TYPE_PASTREAMCALLBACKTIMEINFO
 static int paCallback(const void *inputBuffer,
                       void *outputBuffer,
                       unsigned long framesPerBuffer,
                       const PaStreamCallbackTimeInfo* timeInfo,
                       PaStreamCallbackFlags statusFlags,
                       void *userData )
+#else
+static int paCallback(void *inputBuffer,
+                      void *outputBuffer,
+                      unsigned long framesPerBuffer,
+                      PaTimestamp outTime,
+                      void *userData );
+
+#endif
 {
   Portaudio *portaudio = (Portaudio *) userData;
   float *out = (float*) outputBuffer;

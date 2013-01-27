@@ -57,7 +57,7 @@ gem install audite
 
 ## Debian / Ubuntu Install
 ```
-apt-get install portaudio19-dev libmpg123
+apt-get install libportaudiocpp0 portaudio19-dev libmpg123-dev
 gem install audite
 ```
 

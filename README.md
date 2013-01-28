@@ -28,15 +28,15 @@ require 'audite'
 player = Audite.new
 
 player.events.on(:complete) do
-  exit
+  puts "COMPLETE"
 end
 
 player.events.on(:level) do |level|
-  puts level
+  puts "LEVEL: #{level}"
 end
 
 player.events.on(:position_change) do |pos|
-  puts pos
+  puts "POSITION: #{pos} seconds"
 end
 
 player.load('test.mp3')

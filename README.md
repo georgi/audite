@@ -45,6 +45,11 @@ player.forward(20)
 
 ```
 
+## Requirements
+
+* Portaudio >= 19
+* Mpg123 >= 1.14
+
 ## OSX Install
 
 ```

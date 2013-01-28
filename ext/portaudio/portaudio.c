@@ -51,7 +51,7 @@ static int paCallback(const void *inputBuffer,
   return 0;
 }
 
-VALUE rb_portaudio_new(VALUE klass)
+VALUE rb_portaudio_new(VALUE klass, VALUE framesPerBuffer)
 {
   PaStreamParameters outputParameters;
   const PaDeviceInfo *deviceInfo;
@@ -63,16 +63,16 @@ VALUE rb_portaudio_new(VALUE klass)
   pthread_mutex_init(&portaudio->mutex, NULL);
   pthread_cond_init(&portaudio->cond, NULL);
 
-  portaudio->size = 4096 * 2;
+  portaudio->size = FIX2INT(framesPerBuffer) * 2;
   portaudio->buffer = (float *) malloc(sizeof(float) * portaudio->size);
 
   err = Pa_OpenDefaultStream(&portaudio->stream,
                              0,           /* no input channels */
                              2,           /* stereo output */
                              paFloat32,   /* 32 bit floating point output */
-                             44100,       /* 44100 sample rate*/
-                             4096,        /* frames per buffer */
-                             paCallback,  /* this is your callback function */
+                             44100,       /* sample rate*/
+                             FIX2INT(framesPerBuffer),
+                             paCallback,
                              (void*) portaudio);
 
   if (err != paNoError) {
@@ -96,13 +96,19 @@ VALUE portaudio_wait(void *ptr)
 
 VALUE rb_portaudio_write(VALUE self, VALUE buffer)
 {
-  int i;
+  int i, len;
   Portaudio *portaudio;
   Data_Get_Struct(self, Portaudio, portaudio);
 
   Check_Type(buffer, T_ARRAY);
 
-  for (i = 0; i < portaudio->size; i++) {
+  len = RARRAY_LEN(buffer);
+
+  if (len != portaudio->size) {
+    rb_raise(rb_eStandardError, "array length does not match buffer size: %d != %d", len, portaudio->size);
+  }
+
+  for (i = 0; i < len; i++) {
     portaudio->buffer[i] = NUM2DBL(rb_ary_entry(buffer, i));
   }
 
@@ -154,7 +160,7 @@ void Init_portaudio(void) {
 
   rb_cPortaudio = rb_define_class("Portaudio", rb_cObject);
 
-  rb_define_singleton_method(rb_cPortaudio, "new", rb_portaudio_new, 0);
+  rb_define_singleton_method(rb_cPortaudio, "new", rb_portaudio_new, 1);
   rb_define_method(rb_cPortaudio, "write", rb_portaudio_write, 1);
   rb_define_method(rb_cPortaudio, "start", rb_portaudio_start, 0);
   rb_define_method(rb_cPortaudio, "stop", rb_portaudio_stop, 0);

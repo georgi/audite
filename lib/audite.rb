@@ -20,33 +20,37 @@ class Audite
 
   attr_reader :events, :active
 
-  def initialize
+  def initialize(buffer_size = 2**14)
+    @buffer_size = buffer_size
     @events = Events.new
-    @stream = Portaudio.new
+    @stream = Portaudio.new(@buffer_size)
     @thread = start_thread
   end
 
   def start_thread
     Thread.start do
       loop do
-        @stream.write(process(4096 * 2))
+        @stream.write(process(@buffer_size * 2))
       end
     end
+  end
+
+  def silence(samples)
+    Array.new(samples, 0)
   end
 
   def process(samples)
     if tell >= length
       stop_stream
       events.trigger(:complete)
-      (0..samples).map { 0 }
+      silence(samples)
 
     elsif slice = read(samples)
       events.trigger(:level, level(slice))
       events.trigger(:position_change, position)
-
       slice
     else
-      (0..samples).map { 0 }
+      silence(samples)
     end
 
   rescue => e

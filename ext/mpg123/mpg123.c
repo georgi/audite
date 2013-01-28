@@ -66,9 +66,11 @@ VALUE rb_mpg123_read(VALUE self, VALUE _size)
     for (i = 0; i < size; i++) {
       rb_ary_store(result, i, rb_float_new(buffer[i]));
     }
+    free(buffer);
     return result;
   }
   else {
+    free(buffer);
     rb_raise(rb_eStandardError, "%s", mpg123_plain_strerror(err));
   }
 }

@@ -137,7 +137,7 @@ class Audite
   end
 
   def level(slice)
-    slice.inject(0) {|s, i| s + i.abs } / slice.size
+    slice.map {|i| i.abs }.max
   end
 
   def rewind(seconds = 2)

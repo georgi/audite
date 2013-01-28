@@ -66,29 +66,14 @@ VALUE rb_portaudio_new(VALUE klass)
   portaudio->size = 4096 * 2;
   portaudio->buffer = (float *) malloc(sizeof(float) * portaudio->size);
 
-  numDevices = Pa_GetDeviceCount();
-
-  if (numDevices < 0)
-    rb_raise(rb_eStandardError, "no devices detected");
-
-  device = Pa_GetDefaultOutputDevice();
-  deviceInfo = Pa_GetDeviceInfo(device);
-
-  outputParameters.device = device;
-  outputParameters.channelCount = deviceInfo->maxOutputChannels;
-  outputParameters.sampleFormat = paFloat32;
-  outputParameters.suggestedLatency = deviceInfo->defaultLowOutputLatency;
-  outputParameters.hostApiSpecificStreamInfo = NULL;
-
-  err = Pa_OpenStream(
-      &portaudio->stream,
-      NULL,
-      &outputParameters,
-      44100,
-      4096,
-      paNoFlag,
-      paCallback,
-      portaudio);
+  err = Pa_OpenDefaultStream(&portaudio->stream,
+                             0,           /* no input channels */
+                             2,           /* stereo output */
+                             paFloat32,   /* 32 bit floating point output */
+                             44100,       /* 44100 sample rate*/
+                             4096,        /* frames per buffer */
+                             paCallback,  /* this is your callback function */
+                             (void*) portaudio);
 
   if (err != paNoError) {
     rb_raise(rb_eStandardError, "%s", Pa_GetErrorText(err));

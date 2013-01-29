@@ -20,37 +20,31 @@ class Audite
 
   attr_reader :events, :active
 
-  def initialize(buffer_size = 2**14)
+  def initialize(buffer_size = 2**12)
     @buffer_size = buffer_size
     @events = Events.new
     @stream = Portaudio.new(@buffer_size)
-    @thread = start_thread
   end
 
   def start_thread
     Thread.start do
       loop do
-        @stream.write(process(@buffer_size * 2))
+        process @stream.write_from_mpg(@mp3)
+        @stream.wait
       end
     end
   end
 
-  def silence(samples)
-    Array.new(samples, 0)
+  def level
+    @stream.rms
   end
 
-  def process(samples)
-    if tell >= length
+  def process(status)
+    if status == :done
       stop_stream
       events.trigger(:complete)
-      silence(samples)
-
-    elsif slice = read(samples)
-      events.trigger(:level, level(slice))
-      events.trigger(:position_change, position)
-      slice
     else
-      silence(samples)
+      events.trigger(:position_change, position)
     end
 
   rescue => e
@@ -83,6 +77,7 @@ class Audite
   def load(file)
     @file = file
     @mp3 = Mpg123.new(file)
+    @thread ||= start_thread
   end
 
   def time_per_frame
@@ -99,10 +94,6 @@ class Audite
 
   def length
     @mp3 ? @mp3.length : 0
-  end
-
-  def read(samples)
-    @mp3.read(samples)
   end
 
   def seconds_to_frames(seconds)
@@ -138,10 +129,6 @@ class Audite
 
   def length_in_seconds
     samples_to_seconds(length)
-  end
-
-  def level(slice)
-    slice.map {|i| i.abs }.max
   end
 
   def rewind(seconds = 2)

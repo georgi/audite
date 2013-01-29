@@ -31,12 +31,8 @@ player.events.on(:complete) do
   puts "COMPLETE"
 end
 
-player.events.on(:level) do |level|
-  puts "LEVEL: #{level}"
-end
-
 player.events.on(:position_change) do |pos|
-  puts "POSITION: #{pos} seconds"
+  puts "POSITION: #{pos} seconds  level #{player.level}"
 end
 
 player.load('test.mp3')

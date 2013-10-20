@@ -124,6 +124,7 @@ VALUE rb_portaudio_write_from_mpg(VALUE self, VALUE mpg)
   switch (err) {
     case MPG123_OK: return ID2SYM(rb_intern("ok"));
     case MPG123_DONE: return ID2SYM(rb_intern("done"));
+    case MPG123_NEED_MORE: return ID2SYM(rb_intern("need_more"));
   }
 
   rb_raise(rb_eStandardError, "%s", mpg123_plain_strerror(err));

@@ -20,12 +20,13 @@ class Audite
     end
   end
 
-  attr_reader :events, :active, :stream, :mp3, :thread, :file
+  attr_reader :events, :active, :stream, :mp3, :thread, :file, :song_list
 
   def initialize(buffer_size = 2**12)
     @buffer_size = buffer_size
     @events = Events.new
     @stream = Portaudio.new(@buffer_size)
+    @song_list = []
   end
 
   def start_thread
@@ -56,19 +57,18 @@ class Audite
     $stderr.puts e.backtrace
   end
 
-  def file_name
-    file_regex =~ file
+  def current_song_name
+    song_file_regex =~ mp3.file
     $1
   end
 
-  def file_regex
+  def song_file_regex
     /\/{1}(.\w+\.mp3)/i
   end
 
   def request_next_song
-    if next_song = @song_list.shift
-      self.load next_song
-      $stdout.puts "Playing next song, #{file_name}"
+    if set_current_song && mp3
+      $stdout.puts "Playing next song, #{current_song_name}"
       start_stream
     else
       $stdout.puts 'What would you like to play now?'
@@ -99,19 +99,21 @@ class Audite
     end
   end
 
-  def load(file)
-    if Array === file
-      queue file
-    else
-      @file = file
-      @mp3 = Mpg123.new(file)
-      @thread ||= start_thread
-    end
+  def load(files)
+    files = [] << files unless Array === files
+    files.each {|file| queue file }
+    set_current_song
   end
 
-  def queue song_list
-    @song_list = song_list
-    self.load @song_list.shift
+  def set_current_song
+    @mp3 = song_list.shift
+    @thread ||= start_thread
+  end
+
+  def queue song
+    mpg = Mpg123.new(song)
+    mpg.file = song
+    @song_list << mpg
   end
 
   def time_per_frame

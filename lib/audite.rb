@@ -18,7 +18,7 @@ class Audite
     end
   end
 
-  attr_reader :events, :active
+  attr_reader :events, :active, :stream, :mp3, :thread, :file
 
   def initialize(buffer_size = 2**12)
     @buffer_size = buffer_size
@@ -43,6 +43,8 @@ class Audite
     if status == :done
       stop_stream
       events.trigger(:complete)
+    elsif status == :need_more
+      request_next_song
     else
       events.trigger(:position_change, position)
     end
@@ -50,6 +52,27 @@ class Audite
   rescue => e
     $stderr.puts e.message
     $stderr.puts e.backtrace
+  end
+
+  def file_name
+    file_regex =~ file
+    $1
+  end
+
+  def file_regex
+    /\/{1}(.\w+\.mp3)/i
+  end
+
+  def request_next_song
+    if next_song = @song_list.shift
+      self.load next_song
+      $stdout.puts "Playing next song, #{file_name}"
+      start_stream
+    else
+      $stdout.puts 'What would you like to play now?'
+      file = gets.strip
+      self.load File.expand_path file
+    end
   end
 
   def start_stream
@@ -75,9 +98,18 @@ class Audite
   end
 
   def load(file)
-    @file = file
-    @mp3 = Mpg123.new(file)
-    @thread ||= start_thread
+    if Array === file
+      queue file
+    else
+      @file = file
+      @mp3 = Mpg123.new(file)
+      @thread ||= start_thread
+    end
+  end
+
+  def queue song_list
+    @song_list = song_list
+    self.load @song_list.shift
   end
 
   def time_per_frame

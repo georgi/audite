@@ -56,12 +56,7 @@ class Audite
   end
 
   def current_song_name
-    song_file_regex =~ mp3.file
-    $1
-  end
-
-  def song_file_regex
-    /\/?(.\w+\.mp3)/i
+    File.basename mp3.file
   end
 
   def request_next_song
@@ -115,7 +110,7 @@ class Audite
   end
 
   def queued_songs
-    @song_list.map {|s| s.file }
+    @song_list.map {|s| File.basename s.file }
   end
 
   def time_per_frame

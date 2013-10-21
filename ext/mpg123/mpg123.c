@@ -39,12 +39,9 @@ VALUE rb_mpg123_new(VALUE klass, VALUE filename) {
   mpg123_format_none(mh);
   mpg123_format(mh, rate, channels, encoding);
 
-  return Data_Wrap_Struct(rb_cMpg123, 0, cleanup, mh);
-}
-
-static VALUE rb_mpg123_set_file(VALUE self, VALUE filename)
-{
-  return rb_iv_set(self, "@file", filename);
+  VALUE new_mpg123 = Data_Wrap_Struct(rb_cMpg123, 0, cleanup, mh);
+  rb_iv_set(new_mpg123, "@file", filename);
+  return new_mpg123;
 }
 
 static VALUE rb_mpg123_file(VALUE self, VALUE obj)
@@ -138,7 +135,6 @@ void Init_mpg123(void) {
   rb_define_singleton_method(rb_cMpg123, "new", rb_mpg123_new, 1);
 
   rb_define_method(rb_cMpg123, "file", rb_mpg123_file, 0);
-  rb_define_method(rb_cMpg123, "file=", rb_mpg123_set_file, 1);
 
   rb_define_method(rb_cMpg123, "close", rb_mpg123_close, 0);
   rb_define_method(rb_cMpg123, "read", rb_mpg123_read, 1);

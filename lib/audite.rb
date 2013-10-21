@@ -1,7 +1,7 @@
 require 'portaudio'
 require 'mpg123'
 
-trap('INT') { puts "\nbailing" ; exit }
+trap('INT') { puts "\nClosing" ; exit }
 
 class Audite
   class Events
@@ -30,7 +30,7 @@ class Audite
   end
 
   def start_thread
-    Thread.start do
+    @thread ||= Thread.start do
       loop do
         process @stream.write_from_mpg(@mp3)
         @stream.wait
@@ -61,12 +61,9 @@ class Audite
 
   def request_next_song
     if set_current_song && mp3
-      puts "Playing next song, #{current_song_name}"
       start_stream
     else
-      puts "Finished playing"
       stop_stream
-      exit
     end
   end
 
@@ -74,12 +71,14 @@ class Audite
     unless @active
       @active = true
       @stream.start
+      start_thread
     end
   end
 
   def stop_stream
     if @active
       @active = false
+      @thread = nil unless @thread.alive?
       @stream.stop
     end
   end
@@ -100,7 +99,7 @@ class Audite
 
   def set_current_song
     @mp3 = song_list.shift
-    @thread ||= start_thread
+    start_thread
   end
 
   def queue song

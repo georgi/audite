@@ -68,6 +68,11 @@ class Audite
     end
   end
 
+  def close
+    stream.close
+    exit
+  end
+
   def start_stream
     unless @active
       @active = true

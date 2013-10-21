@@ -17,6 +17,12 @@ player.events.on(:position_change) do |pos|
   Curses.refresh
 end
 
+player.events.on(:complete) do
+  if !player.active
+    player.close
+  end
+end
+
 Curses.init_screen
 Curses.noecho
 Curses.stdscr.keypad(true)

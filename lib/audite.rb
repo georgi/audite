@@ -104,8 +104,7 @@ class Audite
   end
 
   def queue song
-    mpg = Mpg123.new(song)
-    @song_list << mpg
+    @song_list << Mpg123.new(song)
   end
 
   def queued_songs

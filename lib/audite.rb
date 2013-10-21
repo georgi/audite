@@ -43,11 +43,9 @@ class Audite
   end
 
   def process(status)
-    if status == :done
-      stop_stream
-      events.trigger(:complete)
-    elsif status == :need_more
+    if [:done, :need_more].include? status
       request_next_song
+      events.trigger(:complete)
     else
       events.trigger(:position_change, position)
     end
@@ -63,17 +61,17 @@ class Audite
   end
 
   def song_file_regex
-    /\/{1}(.\w+\.mp3)/i
+    /\/?(.\w+\.mp3)/i
   end
 
   def request_next_song
     if set_current_song && mp3
-      $stdout.puts "Playing next song, #{current_song_name}"
+      puts "Playing next song, #{current_song_name}"
       start_stream
     else
-      $stdout.puts 'What would you like to play now?'
-      file = gets.strip
-      self.load File.expand_path file
+      puts "Finished playing"
+      stop_stream
+      exit
     end
   end
 
@@ -114,6 +112,10 @@ class Audite
     mpg = Mpg123.new(song)
     mpg.file = song
     @song_list << mpg
+  end
+
+  def queued_songs
+    @song_list.map {|s| s.file }
   end
 
   def time_per_frame

@@ -60,7 +60,8 @@ class Audite
   end
 
   def request_next_song
-    if set_current_song && mp3
+    if songs_in_queue?
+      set_current_song
       start_stream
     else
       stop_stream
@@ -79,7 +80,7 @@ class Audite
     if @active
       @active = false
       @thread = nil unless @thread.alive?
-      @stream.stop
+      @stream.stop unless @stream.stopped?
     end
   end
 
@@ -110,6 +111,10 @@ class Audite
 
   def queued_songs
     @song_list.map {|s| File.basename s.file }
+  end
+
+  def songs_in_queue?
+    !@song_list.empty?
   end
 
   def time_per_frame

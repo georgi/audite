@@ -1,5 +1,4 @@
-source "http://rubygems.org"
-group :test do
-  gem "rspec", :require => "spec"
-end
+source 'https://rubygems.org'
 
+# Specify your gem's dependencies in audite.gemspec
+gemspec

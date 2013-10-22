@@ -1,6 +1,8 @@
 require 'portaudio'
 require 'mpg123'
 
+trap('INT') { puts "\nClosing" ; exit }
+
 class Audite
   class Events
     def initialize
@@ -18,16 +20,17 @@ class Audite
     end
   end
 
-  attr_reader :events, :active
+  attr_reader :events, :active, :stream, :mp3, :thread, :file, :song_list
 
   def initialize(buffer_size = 2**12)
     @buffer_size = buffer_size
     @events = Events.new
     @stream = Portaudio.new(@buffer_size)
+    @song_list = []
   end
 
   def start_thread
-    Thread.start do
+    @thread ||= Thread.start do
       loop do
         process @stream.write_from_mpg(@mp3)
         @stream.wait
@@ -40,8 +43,8 @@ class Audite
   end
 
   def process(status)
-    if status == :done
-      stop_stream
+    if [:done, :need_more].include? status
+      request_next_song
       events.trigger(:complete)
     else
       events.trigger(:position_change, position)
@@ -52,17 +55,37 @@ class Audite
     $stderr.puts e.backtrace
   end
 
+  def current_song_name
+    File.basename mp3.file
+  end
+
+  def request_next_song
+    if songs_in_queue?
+      set_current_song
+      start_stream
+    else
+      stop_stream
+    end
+  end
+
+  def close
+    stream.close
+    exit
+  end
+
   def start_stream
     unless @active
       @active = true
       @stream.start
+      start_thread
     end
   end
 
   def stop_stream
     if @active
       @active = false
-      @stream.stop
+      @thread = nil unless @thread.alive?
+      @stream.stop unless @stream.stopped?
     end
   end
 
@@ -74,10 +97,27 @@ class Audite
     end
   end
 
-  def load(file)
-    @file = file
-    @mp3 = Mpg123.new(file)
-    @thread ||= start_thread
+  def load(files)
+    files = [] << files unless Array === files
+    files.each {|file| queue file }
+    set_current_song
+  end
+
+  def set_current_song
+    @mp3 = song_list.shift
+    start_thread
+  end
+
+  def queue song
+    @song_list << Mpg123.new(song)
+  end
+
+  def queued_songs
+    @song_list.map {|s| File.basename s.file }
+  end
+
+  def songs_in_queue?
+    !@song_list.empty?
   end
 
   def time_per_frame

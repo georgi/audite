@@ -124,6 +124,7 @@ VALUE rb_portaudio_write_from_mpg(VALUE self, VALUE mpg)
   switch (err) {
     case MPG123_OK: return ID2SYM(rb_intern("ok"));
     case MPG123_DONE: return ID2SYM(rb_intern("done"));
+    case MPG123_NEED_MORE: return ID2SYM(rb_intern("need_more"));
   }
 
   rb_raise(rb_eStandardError, "%s", mpg123_plain_strerror(err));
@@ -134,7 +135,6 @@ VALUE rb_portaudio_wait(VALUE self)
   Portaudio *portaudio;
   Data_Get_Struct(self, Portaudio, portaudio);
 
-  Data_Get_Struct(self, Portaudio, portaudio);
 #ifdef RUBY_UBF_IO
   rb_thread_blocking_region(portaudio_wait, portaudio, RUBY_UBF_IO, NULL);
 #else
@@ -201,6 +201,36 @@ VALUE rb_portaudio_stop(VALUE self)
   return self;
 }
 
+VALUE rb_portaudio_stream_stopped(VALUE self)
+{
+  Portaudio *portaudio;
+  Data_Get_Struct(self, Portaudio, portaudio);
+  int err = Pa_IsStreamStopped(portaudio->stream);
+
+  if (err == 1) {
+    return Qtrue;
+  } else if (err == 0) {
+    return Qfalse;
+  }
+
+  rb_raise(rb_eStandardError, "%s", Pa_GetErrorText(err));
+}
+
+VALUE rb_portaudio_close(VALUE self)
+{
+  Portaudio *portaudio;
+  Data_Get_Struct(self, Portaudio, portaudio);
+  int err = Pa_CloseStream(portaudio->stream);
+
+  pthread_cond_broadcast(&portaudio->cond);
+
+  if (err != paNoError) {
+    rb_raise(rb_eStandardError, "%s", Pa_GetErrorText(err));
+  }
+
+  return self;
+}
+
 void Init_portaudio(void) {
   int err = Pa_Initialize();
 
@@ -212,6 +242,8 @@ void Init_portaudio(void) {
 
   rb_define_singleton_method(rb_cPortaudio, "new", rb_portaudio_new, 1);
   rb_define_method(rb_cPortaudio, "wait", rb_portaudio_wait, 0);
+  rb_define_method(rb_cPortaudio, "stopped?", rb_portaudio_stream_stopped, 0);
+  rb_define_method(rb_cPortaudio, "close", rb_portaudio_close, 0);
   rb_define_method(rb_cPortaudio, "rms", rb_portaudio_rms, 0);
   rb_define_method(rb_cPortaudio, "write", rb_portaudio_write, 1);
   rb_define_method(rb_cPortaudio, "write_from_mpg", rb_portaudio_write_from_mpg, 1);

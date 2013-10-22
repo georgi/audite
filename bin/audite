@@ -1,20 +1,15 @@
 #!/usr/bin/env ruby
 
-require 'rubygems'
 require 'curses'
 require 'audite'
 
 player = Audite.new
 
-player.events.on(:complete) do
-  exit
-end
-
 player.events.on(:position_change) do |pos|
   p = (player.tell / player.length * Curses.cols).ceil
   l = (player.level * Curses.cols).ceil
   Curses.setpos(0, 0)
-  Curses.addstr("playing #{ARGV[0]}    #{player.position.ceil} seconds of #{player.length_in_seconds.ceil} total")
+  Curses.addstr("playing #{player.current_song_name}    #{player.position.ceil} seconds of #{player.length_in_seconds.ceil} total")
   Curses.setpos(1, 0)
   Curses.addstr("#" * p + " " * (Curses.cols - p))
   Curses.setpos(2, 0)
@@ -22,12 +17,18 @@ player.events.on(:position_change) do |pos|
   Curses.refresh
 end
 
+player.events.on(:complete) do
+  if !player.active
+    player.close
+  end
+end
+
 Curses.init_screen
 Curses.noecho
 Curses.stdscr.keypad(true)
 Curses.clear
 
-player.load(ARGV[0])
+player.load(ARGV)
 player.start_stream
 
 while c = Curses.getch
@@ -40,3 +41,5 @@ while c = Curses.getch
     player.toggle
   end
 end
+
+player.thread.join

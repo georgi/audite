@@ -1,5 +1,6 @@
 require 'portaudio'
 require 'mpg123'
+puts "audite required"
 
 trap('INT') { puts "\nClosing" ; exit }
 
@@ -74,7 +75,9 @@ class Audite
   end
 
   def start_stream
-    unless @active
+    puts "start_stream called"
+    unless @active || !song_loaded?
+      puts "starting stream"
       @active = true
       @stream.start
       start_thread
@@ -101,6 +104,10 @@ class Audite
     files = [] << files unless Array === files
     files.each {|file| queue file }
     set_current_song
+  end
+
+  def song_loaded?
+    !@mp3.nil?
   end
 
   def set_current_song

@@ -74,10 +74,11 @@ class Audite
   end
 
   def start_stream
-    unless @active
+    unless @active || !song_loaded?
       @active = true
       @stream.start
       start_thread
+      events.trigger(:toggle, @active)
     end
   end
 
@@ -85,7 +86,10 @@ class Audite
     if @active
       @active = false
       @thread = nil unless @thread.alive?
-      @stream.stop unless @stream.stopped?
+      unless @stream.stopped?
+        @stream.stop
+        events.trigger(:toggle, @active)
+      end
     end
   end
 
@@ -101,6 +105,10 @@ class Audite
     files = [] << files unless Array === files
     files.each {|file| queue file }
     set_current_song
+  end
+
+  def song_loaded?
+    !@mp3.nil?
   end
 
   def set_current_song

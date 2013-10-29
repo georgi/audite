@@ -1,6 +1,5 @@
 require 'portaudio'
 require 'mpg123'
-puts "audite required"
 
 trap('INT') { puts "\nClosing" ; exit }
 
@@ -75,12 +74,11 @@ class Audite
   end
 
   def start_stream
-    puts "start_stream called"
     unless @active || !song_loaded?
-      puts "starting stream"
       @active = true
       @stream.start
       start_thread
+      events.trigger(:toggle, @active)
     end
   end
 
@@ -89,6 +87,7 @@ class Audite
       @active = false
       @thread = nil unless @thread.alive?
       @stream.stop unless @stream.stopped?
+      events.trigger(:toggle, @active)
     end
   end
 

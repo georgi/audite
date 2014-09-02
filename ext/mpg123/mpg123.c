@@ -83,6 +83,14 @@ VALUE rb_mpg123_read(VALUE self, VALUE _size)
 
 VALUE rb_mpg123_length(VALUE self)
 {
+  /*
+   * mpg123_length() only returns an estimated duration
+   * if the song hasn't previously been scanned.
+   * This can be incorrect if, for example, the song is corrupted
+   * and cannot be played after a certain point.
+   * Run mpg123_scan() first to get an accurate length reading.
+   */
+  mpg123_scan(DATA_PTR(self));
   return INT2FIX(mpg123_length(DATA_PTR(self)));
 }
 

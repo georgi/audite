@@ -136,7 +136,7 @@ VALUE rb_portaudio_wait(VALUE self)
   Data_Get_Struct(self, Portaudio, portaudio);
 
 #ifdef RUBY_UBF_IO
-  rb_thread_blocking_region(portaudio_wait, portaudio, RUBY_UBF_IO, NULL);
+  rb_thread_call_without_gvl(portaudio_wait, portaudio, RUBY_UBF_IO, NULL);
 #else
   portaudio_wait(portaudio);
 #endif

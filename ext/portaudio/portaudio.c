@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <portaudio.h>
 #include <mpg123.h>
+#include <string.h>
 
 typedef struct {
   PaStream *stream;
@@ -52,12 +53,13 @@ static int paCallback(const void *inputBuffer,
   return 0;
 }
 
-VALUE rb_portaudio_new(VALUE klass, VALUE framesPerBuffer)
+VALUE rb_portaudio_new(VALUE klass, VALUE framesPerBuffer, VALUE deviceName)
 {
   PaStreamParameters outputParameters;
   const PaDeviceInfo *deviceInfo;
   PaError err;
-  int device, numDevices;
+  int device, numDevices, foundDevice = -1;
+  char* dName = malloc(sizeof(char) * strlen(StringValuePtr(deviceName)));
   VALUE self;
   Portaudio *portaudio = (Portaudio *) malloc(sizeof(Portaudio));
 
@@ -66,19 +68,50 @@ VALUE rb_portaudio_new(VALUE klass, VALUE framesPerBuffer)
 
   portaudio->size = FIX2INT(framesPerBuffer) * 2;
   portaudio->buffer = (float *) malloc(sizeof(float) * portaudio->size);
+	strcpy(dName, StringValuePtr(deviceName));
+	numDevices = Pa_GetDeviceCount();
+	if( numDevices < 0 ) {
+		printf( "ERROR: Pa_CountDevices returned 0x%x\n", numDevices );
+		err = numDevices;
+	}
 
-  err = Pa_OpenDefaultStream(&portaudio->stream,
-                             0,           /* no input channels */
-                             2,           /* stereo output */
-                             paFloat32,   /* 32 bit floating point output */
-                             44100,       /* sample rate*/
-                             FIX2INT(framesPerBuffer),
-                             paCallback,
-                             (void*) portaudio);
+	for ( device=0; device<numDevices; device++ ) {
+		deviceInfo = Pa_GetDeviceInfo( device );
+		if (strcmp(deviceInfo->name, dName) == 0) {
+			foundDevice = device;
+			break;
+		}
+	}
 
-  if (err != paNoError) {
-    rb_raise(rb_eStandardError, "%s", Pa_GetErrorText(err));
-  }
+	if (foundDevice == -1) {
+		err = Pa_OpenDefaultStream(&portaudio->stream,
+				0,           /* no input channels */
+				2,           /* stereo output */
+				paFloat32,   /* 32 bit floating point output */
+				44100,       /* sample rate*/
+				FIX2INT(framesPerBuffer),
+				paCallback,
+				(void*) portaudio);
+	} else {
+		bzero( &outputParameters, sizeof( outputParameters ) );
+		outputParameters.device = foundDevice;
+		outputParameters.channelCount = 2;
+		outputParameters.sampleFormat = paFloat32;
+		outputParameters.suggestedLatency = Pa_GetDeviceInfo(foundDevice)->defaultLowOutputLatency ;
+
+		err = Pa_OpenStream(&portaudio->stream,
+				NULL,
+				&outputParameters,
+				44100,
+				FIX2INT(framesPerBuffer),
+				paNoFlag,
+				paCallback,
+				(void*) portaudio);
+	}
+
+	if (err != paNoError) {
+		rb_raise(rb_eStandardError, "%s", Pa_GetErrorText(err));
+	}
 
   self = Data_Wrap_Struct(rb_cPortaudio, 0, free_portaudio, portaudio);
 
@@ -240,7 +273,7 @@ void Init_portaudio(void) {
 
   rb_cPortaudio = rb_define_class("Portaudio", rb_cObject);
 
-  rb_define_singleton_method(rb_cPortaudio, "new", rb_portaudio_new, 1);
+  rb_define_singleton_method(rb_cPortaudio, "new", rb_portaudio_new, 2);
   rb_define_method(rb_cPortaudio, "wait", rb_portaudio_wait, 0);
   rb_define_method(rb_cPortaudio, "stopped?", rb_portaudio_stream_stopped, 0);
   rb_define_method(rb_cPortaudio, "close", rb_portaudio_close, 0);

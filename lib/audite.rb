@@ -22,10 +22,11 @@ class Audite
 
   attr_reader :events, :active, :stream, :mp3, :thread, :file, :song_list
 
-  def initialize(buffer_size = 2**12)
+  def initialize(buffer_size = 2**12, device_name = '')
     @buffer_size = buffer_size
+    @device_name = device_name
     @events = Events.new
-    @stream = Portaudio.new(@buffer_size)
+    @stream = Portaudio.new(@buffer_size, @device_name)
     @song_list = []
   end
 

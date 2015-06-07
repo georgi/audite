@@ -59,7 +59,6 @@ VALUE rb_portaudio_new(VALUE klass, VALUE framesPerBuffer, VALUE deviceName)
   const PaDeviceInfo *deviceInfo;
   PaError err;
   int device, numDevices, foundDevice = -1;
-  char* dName = malloc(sizeof(char) * strlen(StringValuePtr(deviceName)));
   VALUE self;
   Portaudio *portaudio = (Portaudio *) malloc(sizeof(Portaudio));
 
@@ -68,7 +67,6 @@ VALUE rb_portaudio_new(VALUE klass, VALUE framesPerBuffer, VALUE deviceName)
 
   portaudio->size = FIX2INT(framesPerBuffer) * 2;
   portaudio->buffer = (float *) malloc(sizeof(float) * portaudio->size);
-	strcpy(dName, StringValuePtr(deviceName));
 	numDevices = Pa_GetDeviceCount();
 	if( numDevices < 0 ) {
 		printf( "ERROR: Pa_CountDevices returned 0x%x\n", numDevices );
@@ -77,7 +75,7 @@ VALUE rb_portaudio_new(VALUE klass, VALUE framesPerBuffer, VALUE deviceName)
 
 	for ( device=0; device<numDevices; device++ ) {
 		deviceInfo = Pa_GetDeviceInfo( device );
-		if (strcmp(deviceInfo->name, dName) == 0) {
+		if (strcmp(deviceInfo->name, StringValueCStr(deviceName)) == 0) {
 			foundDevice = device;
 			break;
 		}
